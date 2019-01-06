@@ -189,7 +189,7 @@ testfile = "adult.test.txt"
 examples, attr = openfile(path, datafile) # load the training set
 test, test_attr = openfile(path, testfile) # load the test set
 cls_index = len(attr)-1 # the last attribute is assumed to be the class label
-attr_names = ["age", "workclass", "fnlwgt", "education", "education-num", "marital-status", "occupation", "relationship", "race", "sex", "capital-gain", "capital-loss", "hours-per-week", "native-country", "class"]
+# attr_names = ["age", "workclass", "fnlwgt", "education", "education-num", "marital-status", "occupation", "relationship", "race", "sex", "capital-gain", "capital-loss", "hours-per-week", "native-country", "class"]
  
 attr_avail = [] # marks which attributes are available for splitting (not numeric and not the class label)
 for i in range(len(attr)):
