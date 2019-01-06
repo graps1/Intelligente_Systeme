@@ -103,7 +103,11 @@ def choose_best_attr(examples, attr_avail, cls_index):
             igs += [0]
         else:
             igs += [calc_ig(examples, i, cls_index)]
-    
+    # this check is necessary if all attributes alone don't add any information (ig==0 for all ig:igs)
+    # if all ig's would be 0, the first index would get returned, which is invalid in this case (as it's continous)
+    # so we're just going to return the first available attribute
+    if all( map(lambda x: x==0, igs) ):
+        return attr_avail.index(True)
     return igs.index(max(igs)) # return index of the attribute with highest IG
 
 
@@ -126,14 +130,18 @@ def dtree_learning(examples, attr_avail, default, cls_index):
         return default
     # if all examples have the same classification, then return the classification
     if len(set([ex[cls_index] for ex in examples])) == 1:
-        return (None, examples[0][cls_index])
+        return (None, examples[0][cls_index], 1)
     # if attributes empty, return MODE(examples) <-- what is MODE????
     if not any(attr_avail):
-        return (None, majority(examples, cls_index))
+        return (None, majority(examples, cls_index), 2)
 
     # choose attribute which minimizes the entropy after a split
     best_attr_idx = choose_best_attr(examples, attr_avail, cls_index)
-    
+
+    if best_attr_idx == 0:
+        print(len(examples), set([ex[cls_index] for ex in examples]), attr_avail)
+
+
     # "mark" this attribute as used
     n_attr_avail = [a for a in attr_avail]
     n_attr_avail[best_attr_idx] = False
@@ -144,7 +152,7 @@ def dtree_learning(examples, attr_avail, default, cls_index):
     # create subtrees
     for manif in attr[best_attr_idx]:
         n_examples = [ex for ex in examples if ex[best_attr_idx] == manif]
-        subtree = dtree_learning(n_examples, n_attr_avail, (None, majority(examples, cls_index)), cls_index) 
+        subtree = dtree_learning(n_examples, n_attr_avail, (None, majority(examples, cls_index), 0), cls_index) 
         tree[1].append(subtree)
     
     return tree
@@ -160,15 +168,12 @@ def dtree_classify(dtree, x):
     global attr
 
     # ... else descend more --> remember: tree[0] carries the attribute index
-    subtree_pos = 0
     # check all subtrees
-    for i in range(len(dtree[1])):
-        # check all possible manifestations
-        for manif in attr[dtree[0]]:
-            # this is the attribute we splitted the tree @
-            if manif == x[dtree[0]]:
-                subtree_pos = i
-                
+    # attr[dtree[0]] all possible manifestations
+    # x[dtree[0]]    manifestation of attribute in x 
+    # print(dtree[2], dtree[0], attr[ dtree[0] ], x[dtree[0]] )
+    subtree_pos = attr[ dtree[0] ].index( x[dtree[0]] ) # == index of subtree
+
     return dtree_classify(dtree[1][subtree_pos], x) # descend into subtree recursively
 
 
